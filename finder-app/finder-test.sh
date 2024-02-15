@@ -29,7 +29,7 @@ echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 rm -rf "${WRITEDIR}"
 
 # create $WRITEDIR if not assignment1
-assignment=$(cat ../conf/assignment.txt)
+assignment=$(cat /conf/assignment.txt)
 
 if [ "$assignment" != 'assignment1' ]; then
     mkdir -p "$WRITEDIR"
@@ -40,6 +40,9 @@ if [ "$assignment" != 'assignment1' ]; then
         exit 1
     fi
 fi
+
+# Compile the C program
+#gcc -o writer_utility writer.c -lbsd
 
 for i in $( seq 1 $NUMFILES); do
     ./writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
