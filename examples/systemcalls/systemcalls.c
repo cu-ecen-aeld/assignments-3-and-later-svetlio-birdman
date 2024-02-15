@@ -27,6 +27,7 @@ bool do_exec(int count, ...)
     command[count] = NULL;
 
     pid_t pid = fork();
+    fflush(stdout);
 
     if (pid == -1)
     {
@@ -66,6 +67,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     command[count] = NULL;
 
     pid_t pid = fork();
+    fflush(stdout);
 
     if (pid == -1)
     {
