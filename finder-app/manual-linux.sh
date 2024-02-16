@@ -70,6 +70,7 @@ if [ ! -d "${OUTDIR}/busybox" ]; then
     # TODO: Configure busybox
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} distclean
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
+    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} menuconfig
 else
     cd busybox
 fi
@@ -104,7 +105,7 @@ sudo mknod -m 666 dev/null c 1 3
 sudo mknod -m 620 dev/console c 5 1
 
 # TODO: Clean and build the writer utility
-cd /home/svetoslav/Documents/linux_assignments/assignment-2-svetlio-birdman/finder-app
+cd /home/svetoslav/Documents/linux_assignments/assignments-3-and-later-svetlio-birdman/finder-app
 make clean
 make CROSS_COMPILE=${CROSS_COMPILE} -j4 writer
 
@@ -114,6 +115,7 @@ make CROSS_COMPILE=${CROSS_COMPILE} -j4 writer
 cp writer ${OUTDIR}/rootfs/home/
 cp finder.sh ${OUTDIR}/rootfs/home/
 cp finder-test.sh ${OUTDIR}/rootfs/home/
+cp finder.sh writer ${OUTDIR}/rootfs/usr/bin
 # Modify the finder-test.sh to reference conf/assignment
 sed -i 's/\.\.\/conf/conf/g' ${OUTDIR}/rootfs/home/finder-test.sh
 cp -r ../conf ${OUTDIR}/rootfs/home/conf
@@ -130,143 +132,3 @@ find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
 cd $OUTDIR
 gzip -f initramfs.cpio
 
-
-
-# !/bin/bash
-# Script outline to install and build kernel.
-# Author: Siddhant Jajoo.
-
-# set -e
-# set -u
-
-# OUTDIR=/tmp/aeld
-# KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
-# KERNEL_VERSION=v5.1.10
-# BUSYBOX_VERSION=1_33_1
-# FINDER_APP_DIR=$(realpath $(dirname $0))
-# ARCH=arm64
-# CROSS_COMPILE=aarch64-none-linux-gnu-
-
-# if [ $# -lt 1 ]
-# then
-#     echo "Using default directory ${OUTDIR} for output"
-# else
-#     OUTDIR=$1
-#     echo "Using passed directory ${OUTDIR} for output"
-# fi
-
-# mkdir -p ${OUTDIR}
-
-# cd "$OUTDIR"
-# if [ ! -d "${OUTDIR}/linux-stable" ]; then
-#     #Clone only if the repository does not exist.
-#     echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
-#     git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
-# fi
-# if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
-#     cd linux-stable
-#     echo "Checking out version ${KERNEL_VERSION}"
-#     git checkout ${KERNEL_VERSION}
-
-#     # deep clean kernel build tree
-#     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
-#     # Use provided configuration for 'virt' arm dev board
-#     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
-#     # build kernel image for QEMU
-#     make -j4 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
-#     # Skip building modules to avoid too large kernel to fit in the initramfs with default memory.
-#     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
-#     # build device tree
-#     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
-# fi
-
-# echo "Adding the Image in outdir"
-# cp ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ${OUTDIR}
-
-# echo "Creating the staging directory for the root filesystem"
-# cd "$OUTDIR"
-# if [ -d "${OUTDIR}/rootfs" ]
-# then
-#     echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
-#     sudo rm  -rf ${OUTDIR}/rootfs
-# fi
-
-# # Create necessary base directories
-# ROOTFS="${OUTDIR}/rootfs/"
-# mkdir -p ${ROOTFS}/bin
-# mkdir -p ${ROOTFS}/dev
-# mkdir -p ${ROOTFS}/etc
-# mkdir -p ${ROOTFS}/home
-# mkdir -p ${ROOTFS}/lib
-# mkdir -p ${ROOTFS}/lib64
-# mkdir -p ${ROOTFS}/proc
-# mkdir -p ${ROOTFS}/sbin
-# mkdir -p ${ROOTFS}/sys
-# mkdir -p ${ROOTFS}/tmp
-# mkdir -p ${ROOTFS}/var
-# mkdir -p ${ROOTFS}/usr/bin
-# mkdir -p ${ROOTFS}/usr/lib
-# mkdir -p ${ROOTFS}/usr/sbin
-# mkdir -p ${ROOTFS}/var/log
-
-# cd ${OUTDIR}
-# if [ ! -d "${OUTDIR}/busybox" ]
-# then
-# git clone git://busybox.net/busybox.git
-#     cd busybox
-#     git checkout ${BUSYBOX_VERSION}
-#     # Configure busybox
-#     make distclean
-#     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
-# else
-#     cd busybox
-# fi
-
-# # Make and install busybox
-# make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
-# make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
-
-# cd "$OUTDIR/rootfs"
-# echo "Library dependencies"
-# ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
-# ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
-
-
-# # Add library dependencies to rootfs
-# SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
-# cp ${SYSROOT}/lib/ld-linux-aarch64.so.1 ${ROOTFS}/lib
-# cp ${SYSROOT}/lib/ld-linux-aarch64.so.1 lib64
-# cp ${SYSROOT}/lib64/libm.so.6 ${ROOTFS}/lib64
-# cp ${SYSROOT}/lib64/libresolv.so.2 ${ROOTFS}/lib64
-# cp ${SYSROOT}/lib64/libc.so.6 ${ROOTFS}/lib64
-
-# # Make device nodes
-# sudo mknod -m 666 ${ROOTFS}/dev/null c 1 3
-# sudo mknod -m 600 ${ROOTFS}/dev/console c 5 1
-
-# # Clean and build the writer utility
-# # make clean -C ${FINDER_APP_DIR}
-# make CROSS_COMPILE=${CROSS_COMPILE} -C ${FINDER_APP_DIR} writer
-
-# # Copy the finder related scripts and executables to the /home directory
-# # on the target rootfs
-# cp ${FINDER_APP_DIR}/autorun-qemu.sh ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/dependencies.sh ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/finder-test.sh ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/finder.sh ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/writer ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/writer.c ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/writer.sh ${ROOTFS}/home
-# cp ${FINDER_APP_DIR}/Makefile ${ROOTFS}/home
-# mkdir ${ROOTFS}/home/conf
-# cp ${FINDER_APP_DIR}/conf/username.txt ${ROOTFS}/home/conf
-# cp ${FINDER_APP_DIR}/conf/assignment.txt ${ROOTFS}/home/conf
-
-
-# # Chown the root directory
-# sudo chown -R root:root ${ROOTFS}
-
-# # Create initramfs.cpio.gz
-# cd ${ROOTFS}
-# find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
-# gzip -f ${OUTDIR}/initramfs.cpio
